@@ -3,9 +3,7 @@ from pathlib import Path
 
 import yaml
 
-import Validators
-
-requiredFields = ['outputDir', 'jobs']
+requiredFields = ['outputDir', 'jobs','githubRepository']
 jobRequiredFields = ['id', 'task']
 NOT_GIVEN = 'NOT_GIVEN'
 
@@ -17,14 +15,14 @@ class JobConfig:
         self.jobConfig = jobConfig
         self.overallConfig = overallConfig
 
-    def validate(self):
+    def validate(self, jobValidators):
         validationErrors = []
         for field in jobRequiredFields:
             if field not in self.jobConfig:
                 validationErrors.append("The '{}' attribute is required but not present.".format(field))
         if self.task is not None:
-            if hasattr(Validators, self.task):
-                validationErrors.extend(getattr(Validators, self.task)(self.jobConfig, self.overallConfig))
+            if hasattr(jobValidators, self.task):
+                validationErrors.extend(getattr(jobValidators, self.task)(self.jobConfig, self.overallConfig))
         return validationErrors
 
 
@@ -33,11 +31,15 @@ class Config:
         with open(configFilePath) as fp:
             self.raw_config = yaml.safe_load(fp)
 
+        self.githubRepository = self.raw_config.get('githubRepository', None) # todo perhaps it make sense for this to be a different config object?
+        self.moduleName = self.githubRepository.split('/')[-1].split('.')[0]
+        self.pathToModuleCode = "./testModules/"+self.moduleName
+
         self.outputDir = Path(self.raw_config['outputDir']) if 'outputDir' in self.raw_config else None
         self.jobs = [JobConfig(jobConfig, self) for jobConfig in
                      self.raw_config['jobs']] if 'jobs' in self.raw_config else None
 
-    def validate(self):
+    def validate(self, jobValidators):
         validationErrors = []
         for field in requiredFields:
             if field not in self.raw_config:
@@ -52,5 +54,5 @@ class Config:
 
         if self.jobs is not None:
             for job in self.jobs:
-                validationErrors.extend(["Job({}): {}".format(job.id, err) for err in job.validate()])
+                validationErrors.extend(["Job({}): {}".format(job.id, err) for err in job.validate(jobValidators)])
         return validationErrors

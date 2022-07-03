@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 
 import yaml
+from git import Repo
 
 
 class Status(Enum):
@@ -19,6 +20,13 @@ class JobStatusTracker:
         self.current_job = None
         self.end_time = None
         self.outFilePath = os.path.join(config.outputDir, 'status.yaml')
+
+        testRepo = Repo(config.pathToModuleCode)
+        self.currentTestSha = testRepo.head.object.hexsha
+        orchestrationRepo = Repo('.')
+
+        self.orchestrationSha = orchestrationRepo.head.object.hexsha
+
         self.flush()
 
     def setCurrentJob(self, jobId):
@@ -38,5 +46,7 @@ class JobStatusTracker:
             'status': self.status.name,
             'start_time': self.start_time,
             'end_time': self.end_time,
+            'orchestration_sha': self.orchestrationSha,
+            'current_test_sha': self.currentTestSha,
             'current_job': self.current_job
         }
