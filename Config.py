@@ -3,26 +3,25 @@ from pathlib import Path
 
 import yaml
 
-requiredFields = ['outputDir', 'jobs','githubRepository']
-jobRequiredFields = ['id', 'task']
-NOT_GIVEN = 'NOT_GIVEN'
+requiredFields = ['outputDir', 'tasks', 'githubRepository']
+taskRequiredFields = ['id', 'method']
 
 
-class JobConfig:
-    def __init__(self, jobConfig, overallConfig):
-        self.id = jobConfig.get('id', None)
-        self.task = jobConfig.get('task', None)
-        self.jobConfig = jobConfig
+class TaskSpecificConfig:
+    def __init__(self, taskConfig, overallConfig):
+        self.id = taskConfig.get('id', None)
+        self.method = taskConfig.get('method', None)
+        self.rawTaskConfig = taskConfig
         self.overallConfig = overallConfig
 
-    def validate(self, jobValidators):
+    def validate(self, taskValidators):
         validationErrors = []
-        for field in jobRequiredFields:
-            if field not in self.jobConfig:
+        for field in taskRequiredFields:
+            if field not in self.rawTaskConfig:
                 validationErrors.append("The '{}' attribute is required but not present.".format(field))
-        if self.task is not None:
-            if hasattr(jobValidators, self.task):
-                validationErrors.extend(getattr(jobValidators, self.task)(self.jobConfig, self.overallConfig))
+        if self.method is not None:
+            if hasattr(taskValidators, self.method):
+                validationErrors.extend(getattr(taskValidators, self.method)(self.overallConfig.raw_config, self.rawTaskConfig))
         return validationErrors
 
 
@@ -31,15 +30,16 @@ class Config:
         with open(configFilePath) as fp:
             self.raw_config = yaml.safe_load(fp)
 
-        self.githubRepository = self.raw_config.get('githubRepository', None) # todo perhaps it make sense for this to be a different config object?
+        self.githubRepository = self.raw_config.get('githubRepository',
+                                                    None)  # todo perhaps it make sense for this to be a different config object?
         self.moduleName = self.githubRepository.split('/')[-1].split('.')[0]
-        self.pathToModuleCode = "./testModules/"+self.moduleName
+        self.pathToModuleCode = "./testModules/" + self.moduleName
 
         self.outputDir = Path(self.raw_config['outputDir']) if 'outputDir' in self.raw_config else None
-        self.jobs = [JobConfig(jobConfig, self) for jobConfig in
-                     self.raw_config['jobs']] if 'jobs' in self.raw_config else None
+        self.tasks = [TaskSpecificConfig(taskConfig, self) for taskConfig in
+                     self.raw_config['tasks']] if 'tasks' in self.raw_config else None
 
-    def validate(self, jobValidators):
+    def validate(self, taskValidators):
         validationErrors = []
         for field in requiredFields:
             if field not in self.raw_config:
@@ -52,7 +52,7 @@ class Config:
             if not os.path.exists(self.outputDir.parent):
                 validationErrors.append("The parent of {} doesn't exist.".format(self.outputDir))
 
-        if self.jobs is not None:
-            for job in self.jobs:
-                validationErrors.extend(["Job({}): {}".format(job.id, err) for err in job.validate(jobValidators)])
+        if self.tasks is not None:
+            for task in self.tasks:
+                validationErrors.extend(["Task({}): {}".format(task.id, err) for err in task.validate(taskValidators)])
         return validationErrors

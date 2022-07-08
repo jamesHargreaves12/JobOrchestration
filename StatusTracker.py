@@ -12,7 +12,7 @@ class Status(Enum):
     FAILED = 3
 
 
-class JobStatusTracker:
+class StatusTracker:
     def __init__(self, config):
         self.config = config
         self.status = Status.RUNNING
@@ -29,7 +29,7 @@ class JobStatusTracker:
 
         self.flush()
 
-    def setCurrentJob(self, jobId):
+    def setCurrentTask(self, jobId):
         self.current_job = jobId
 
     def finishJob(self):

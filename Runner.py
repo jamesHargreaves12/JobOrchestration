@@ -5,7 +5,7 @@ import sys
 from shutil import copyfile
 
 from Config import Config
-from JobStatusTracker import JobStatusTracker
+from StatusTracker import StatusTracker
 from Loggers import setupConsoleLogger, setUpFileLogger
 
 parser = argparse.ArgumentParser()
@@ -38,14 +38,14 @@ os.mkdir(config.outputDir)
 setUpFileLogger(config)
 
 
-status = JobStatusTracker(config)
+status = StatusTracker(config)
 copyfile(args.path, os.path.join(config.outputDir, 'config.yaml'))
 logging.info("Initialization complete")
 
 # Run - todo make this separate executions?
-for job in config.jobs:
-    logging.info("Running job with name: " + job.id)
-    status.setCurrentJob(job.id)
-    getattr(Tasks, job.task)(config, job)
+for task in config.tasks:
+    logging.info("Running task with name: " + task.id)
+    status.setCurrentTask(task.id)
+    getattr(Tasks, task.method)(config.raw_config, task.rawTaskConfig)
 logging.info("Finished")
 status.finishJob()
