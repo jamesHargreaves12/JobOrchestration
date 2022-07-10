@@ -3,7 +3,8 @@ import os
 
 from Config import Config
 
-def setupConsoleLogger():
+
+def setUpConsoleLogger():
     logFormatter = logging.Formatter("%(asctime)s [%(levelname)-5.5s]  %(message)s")
     rootLogger = logging.getLogger()
     rootLogger.setLevel(logging.INFO)
@@ -23,3 +24,9 @@ def setUpFileLogger(config: Config):
     fileHandler.setFormatter(logFormatter)
     rootLogger.addHandler(fileHandler)
 
+
+def removeFileLogger():
+    rootLogger = logging.getLogger()
+    fileHandlers = [x for x in rootLogger.handlers if isinstance(x, logging.FileHandler)]
+    assert len(fileHandlers) == 1
+    rootLogger.removeHandler(fileHandlers[0])
