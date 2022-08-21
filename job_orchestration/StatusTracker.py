@@ -99,7 +99,7 @@ class StatusTracker:
             testRepo = Repo(config.pathToModuleCode)
             self.currentTestSha = testRepo.head.object.hexsha
 
-            self.orchestrationVersion = version('job-orchestration')
+            self.orchestrationVersion = version('job_orchestration')
 
             self.flush()
 

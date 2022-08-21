@@ -13,6 +13,8 @@ from .Constants import config_source_location, config_ready_location, config_yam
 
 
 # This is not intended to be thread safe do not run in parallel.
+
+
 def SetConfigFilesReady():
     setUpConsoleLogger()
     for filename in os.listdir(config_source_location):
@@ -23,15 +25,9 @@ def SetConfigFilesReady():
         assert not Repo(config.pathToModuleCode).is_dirty(), \
             "You have uncommitted changes this means that your results will not be easily repeatable."
 
-        # This is kinda horrible but I don't know a better way round the problem of wanting to run sub-packages independently
-        # some times
-        sys.path.append(config.pathToModuleCode)
-        import Validators
-        sys.path.remove(config.pathToModuleCode)
-
         # Validate
         logging.info("Starting Validation")
-        validationErrors = config.validate(Validators)
+        validationErrors = config.validate()
         if validationErrors:
             logging.error("The config file failed validation.")
             for e in validationErrors:

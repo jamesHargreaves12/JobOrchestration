@@ -6,7 +6,6 @@ config_source_location = os.path.join(BASE_FOLDER,'ConfigSources')
 config_ready_location = os.path.join(BASE_FOLDER,'ConfigsToRun')
 config_completed_location = os.path.join(BASE_FOLDER,'ConfigsCompleted')
 config_failed_location = os.path.join(BASE_FOLDER,'ConfigsFailed')
-config_free_parking_location = os.path.join(BASE_FOLDER,'ConfigsFreeParking')
 output_location = os.path.join(BASE_FOLDER,'Output')
 misc_location = os.path.join(BASE_FOLDER,'Misc')
 config_yaml = "config.yaml"

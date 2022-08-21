@@ -1,27 +1,14 @@
 import logging
 import os
-import sys
 from random import choice
 from shutil import copyfile
 import fasteners as fasteners
 
-from .InBuiltUtilityTasks import createConfigs
-from .Config import Config, TaskSpecificConfig
+from .Config import Config, TaskConfig
 from .Loggers import setUpConsoleLogger, setUpFileLogger, removeFileLogger
 from .StatusTracker import StatusTracker, Status, predRunTimes
 from .Constants import config_ready_location, config_completed_location, config_failed_location
-
-tasks_cache = {}
-
-
-def gettingTasksCached(pathToModuleCode):
-    if pathToModuleCode in tasks_cache:
-        return tasks_cache[pathToModuleCode]
-    sys.path.append(pathToModuleCode)
-    import Tasks
-    sys.path.remove(pathToModuleCode)
-    tasks_cache[pathToModuleCode] = Tasks
-    return Tasks
+from .getClientMethods import getTaskByName
 
 
 def getNextTask(status: StatusTracker, config: Config):
@@ -38,12 +25,8 @@ def getNextTask(status: StatusTracker, config: Config):
     return config.tasks[curIndex + 1]
 
 
-def runTask(config: Config, task: TaskSpecificConfig):
-    if task.method == 'createConfigs':
-        createConfigs(config, task)
-
-    Tasks = gettingTasksCached(config.pathToModuleCode)
-    getattr(Tasks, task.method)(config.raw_config, task.rawTaskConfig)
+def runTask(config: Config, taskConfig: TaskConfig):
+    getTaskByName(config.pathToModuleCode, taskConfig.method)(taskConfig)
 
 
 def runWorker():
