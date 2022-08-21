@@ -1,7 +1,7 @@
 import logging
 import os
 
-from Config import Config
+from .Config import Config
 
 
 def setUpConsoleLogger():

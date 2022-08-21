@@ -3,8 +3,8 @@ import sys
 
 import yaml
 
-from Config import Config, TaskSpecificConfig
-from Constants import config_free_parking_location
+from .Config import Config, TaskSpecificConfig
+from .Constants import config_free_parking_location
 
 
 def createConfigs(config: Config, task: TaskSpecificConfig):

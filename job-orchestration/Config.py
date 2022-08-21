@@ -34,12 +34,12 @@ def getFullOutputDir(rawOutputDir: str):
 class Config:
     def __init__(self, configFilePath):
         with open(configFilePath) as fp:
-            self.raw_config = yaml.safe_load(fp)
+            self.raw_config = yaml.load(fp,yaml.CLoader)
 
         self.githubRepository = self.raw_config.get('githubRepository',
                                                     None)  # todo perhaps it make sense for this to be a different config object?
         self.moduleName = self.githubRepository.split('/')[-1].split('.')[0]
-        self.pathToModuleCode = "./testModules/" + self.moduleName
+        self.pathToModuleCode = self.raw_config.get('pathToModuleCode',None)
 
         self.outputDir = Path(
             getFullOutputDir(self.raw_config['outputDir'])) if 'outputDir' in self.raw_config else None
