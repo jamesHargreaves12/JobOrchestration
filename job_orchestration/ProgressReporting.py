@@ -1,12 +1,18 @@
 import os
 from collections import defaultdict
 
+import yaml
+
 from .Config import Config
-from .Constants import config_ready_location
+from .Constants import config_ready_location, workers_registration_path
 from .StatusTracker import StatusTracker, predRunTimes
 
-# Note need to set this to get accurate time remaining - TODO set this automatically
-number_of_workers = 3
+
+def getRunningWorkersCount():
+    workerRegistration = {}
+    if os.path.exists(workers_registration_path):
+        workerRegistration = yaml.safe_load(workers_registration_path)
+    return len(workerRegistration)
 
 
 def progressReport():
@@ -29,5 +35,5 @@ def progressReport():
     for k, v in taskNumberCounter.items():
         print(k, v)
 
-    remainingTime = cumulativeTimeRemaining / number_of_workers
+    remainingTime = cumulativeTimeRemaining / getRunningWorkersCount()
     print("Expected time remaining: {}m{}".format(int(remainingTime // 60), int(remainingTime % 60)))
