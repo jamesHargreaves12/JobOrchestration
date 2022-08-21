@@ -22,8 +22,11 @@ def SetConfigFilesReady():
         logging.info("Processing " + filepath)
         config = Config(filepath)
 
-        assert not Repo(config.pathToModuleCode).is_dirty(), \
-            "You have uncommitted changes this means that your results will not be easily repeatable."
+        if "UNSAFE_ignoreDirtyCheck" in config.raw_config and config.raw_config["UNSAFE_ignoreDirtyCheck"]:
+            logging.warning("Skiping dirty check - these results might not be repeatable")
+        else:
+            assert not Repo(config.pathToModuleCode,search_parent_directories=True).is_dirty(), \
+                "You have uncommitted changes this means that your results will not be easily repeatable."
 
         # Validate
         logging.info("Starting Validation")

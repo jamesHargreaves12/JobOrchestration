@@ -96,7 +96,7 @@ class StatusTracker:
             self.last_updated = self.start_time
             self.error_count = 0
 
-            testRepo = Repo(config.pathToModuleCode)
+            testRepo = Repo(config.pathToModuleCode, search_parent_directories=True)
             self.currentTestSha = testRepo.head.object.hexsha
 
             self.orchestrationVersion = version('job_orchestration')

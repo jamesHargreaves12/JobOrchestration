@@ -6,14 +6,13 @@ from shutil import copyfile
 from time import time
 
 import fasteners as fasteners
-import yaml
 
-from .Config import Config, TaskConfig
+from .Config import Config
 from .Loggers import setUpConsoleLogger, setUpFileLogger, removeFileLogger
 from .StatusTracker import StatusTracker, Status, predRunTimes
-from .Constants import config_ready_location, config_completed_location, config_failed_location, misc_location, \
-    workers_registration_path
+from .Constants import config_ready_location, config_completed_location, config_failed_location
 from .getClientMethods import getTaskByName
+from .workerRegistration import registerWorkerStarted, registerWorkerFinished
 
 
 def getNextTask(status: StatusTracker, config: Config):
@@ -29,40 +28,15 @@ def getNextTask(status: StatusTracker, config: Config):
     assert (curIndex < len(config.tasks) - 1)
     return config.tasks[curIndex + 1]
 
-# Maybe this should be its own class to encapsulate these highly related and coupled methods but for now this will do
-def registerWorkerStarted(workerId):
-    lock = fasteners.InterProcessLock(os.path.join(misc_location, 'lock.file'))
-    lock.acquire(blocking=True)
-    if lock.acquired:
-        workersRegistration = {}
-        if os.path.exists(workers_registration_path):
-            workersRegistration = yaml.safe_load(open(workers_registration_path))
-        workersRegistration[workerId] = time()
-        yaml.dump(workers_registration_path, workersRegistration)
-        lock.release()
-
-def registerWorkerFinished(workerId):
-    lock = fasteners.InterProcessLock(os.path.join(misc_location, 'lock.file'))
-    lock.acquire(blocking=True)
-    if lock.acquired:
-        workersRegistration = {}
-        if os.path.exists(workers_registration_path):
-            workersRegistration = yaml.safe_load(open(workers_registration_path))
-        workersRegistration[workerId] = time()
-        if workerId in workersRegistration:
-            del workersRegistration[workerId]
-        yaml.dump(workers_registration_path, workersRegistration)
-        lock.release()
-
 
 def runWorker():
     setUpConsoleLogger()
-    workerId = uuid.UUID()
+    workerId = str(uuid.uuid4())
     registerWorkerStarted(workerId)
 
     try:
         while True:
-            startLoopTime= time()
+            startLoopTime = time()
             candidates = [fn for fn in os.listdir(config_ready_location)]
             if not candidates:
                 logging.info("No more Configs to run.")
@@ -115,12 +89,8 @@ def runWorker():
                 endLoopTime = time()
                 if succeeded:
                     logging.info("Loop total time = {:.2f}, task total time = {:.2f} hence library overhead = {:.2f}%"
-                                 .format(endLoopTime-startLoopTime, taskEndTime-taskStartTime,
-                                         (taskEndTime-taskStartTime)/(endLoopTime- startLoopTime)*100))
+                                 .format(endLoopTime - startLoopTime, taskEndTime - taskStartTime,
+                                         (taskEndTime - taskStartTime) / (endLoopTime - startLoopTime) * 100))
         predRunTimes.save()
     finally:
         registerWorkerFinished(workerId)
-
-
-
-
