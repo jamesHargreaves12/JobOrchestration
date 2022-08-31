@@ -23,8 +23,8 @@ def readyConfigs():
 
 
 def progressReport():
-    from .ProgressReporting import progressReport
-    progressReport()
+    from .ProgressReporting import continualProgressReport
+    continualProgressReport()
 
 
 def rereadyFailed():

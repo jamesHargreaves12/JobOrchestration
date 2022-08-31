@@ -33,6 +33,9 @@ class PredRunTimes:
     def __init__(self):
         if not os.path.exists(self.filepath):
             return
+        self.load_from_disk()
+
+    def load_from_disk(self):
         obj = yaml.load(open(self.filepath, 'r'), yaml.CLoader)
         for key in obj.keys():
             self.pred_run_times[key] = obj[key]
@@ -53,6 +56,7 @@ class PredRunTimes:
             with open(self.filepath, 'w+') as fp:
                 yaml.dump(toWrite, fp)
             lock.release()
+        self.load_from_disk()
 
     def update(self, name, value):
         if name in self.pred_run_times:

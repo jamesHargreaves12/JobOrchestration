@@ -1,6 +1,0 @@
-githubRepository: https://github.com/jamesHargreaves12/JobOrchestration.git
-outputDir: Test
-pathToModuleCode: C:\Users\james.hargreaves\PycharmProjects\JobOrchestration\demo
-tasks:
-- id: test
-  method: test

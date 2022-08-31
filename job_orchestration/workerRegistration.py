@@ -41,5 +41,5 @@ def registerWorkerFinished(workerId: str):
 def getRunningWorkersCount():
     workerRegistration = {}
     if os.path.exists(workers_registration_path):
-        workerRegistration = yaml.safe_load(workers_registration_path)
+        workerRegistration = yaml.safe_load(open(workers_registration_path))
     return len(workerRegistration)

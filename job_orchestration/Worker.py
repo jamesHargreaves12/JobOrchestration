@@ -90,7 +90,7 @@ def runWorker():
                 if succeeded:
                     logging.info("Loop total time = {:.2f}, task total time = {:.2f} hence library overhead = {:.2f}%"
                                  .format(endLoopTime - startLoopTime, taskEndTime - taskStartTime,
-                                         (taskEndTime - taskStartTime) / (endLoopTime - startLoopTime) * 100))
+                                         100 - (taskEndTime - taskStartTime) / (endLoopTime - startLoopTime) * 100))
         predRunTimes.save()
     finally:
         registerWorkerFinished(workerId)
