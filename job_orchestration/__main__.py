@@ -2,7 +2,6 @@ import argparse
 import os
 from .Constants import config_source_location, config_ready_location, config_completed_location, config_failed_location, \
     misc_location
-from .hypeparameterOptimisation import specialCaseValidators
 
 
 def __setupDirectoryStructure():
@@ -20,7 +19,7 @@ def newWorker():
 
 def readyConfigs():
     from .SetConfigFilesReady import SetConfigFilesReady
-    SetConfigFilesReady(specialCaseValidators) # hopefully temporary while I get this all working
+    SetConfigFilesReady()
 
 
 def progressReport():
