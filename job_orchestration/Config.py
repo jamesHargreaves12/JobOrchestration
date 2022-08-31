@@ -5,42 +5,9 @@ from pathlib import Path
 import yaml
 
 from .Constants import output_location
-from .getClientMethods import getValidatorByName
 
 requiredFields = ['outputDir', 'tasks', 'githubRepository']
 taskRequiredFields = ['id', 'method']
-
-
-class TaskConfig:
-    def __init__(self, taskConfig, overallConfig):
-        self.id = taskConfig.get('id', None)
-        self.method = taskConfig.get('method', None)
-        self.rawTaskConfig = taskConfig
-        self.overallConfig = overallConfig
-
-    def __getitem__(self, item):
-        if item in self.rawTaskConfig:
-            return self.rawTaskConfig[item]
-        return self.overallConfig.raw_config[item]
-
-    def __contains__(self, item):
-        return item in self.rawTaskConfig or item in self.overallConfig.raw_config
-
-    def validate(self):
-        validationErrors = []
-        for field in taskRequiredFields:
-            if field not in self.rawTaskConfig:
-                validationErrors.append("The '{}' attribute is required but not present.".format(field))
-        if self.method is not None:
-            validator = getValidatorByName(self.overallConfig.pathToModuleCode, self.method)
-            if validator is not None:
-                validationErrors.extend(validator(self))
-        return validationErrors
-
-
-def getFullOutputDir(rawOutputDir: str):
-    path = rawOutputDir.format(date=datetime.now().strftime('%Y_%m_%d'), time=datetime.now().strftime('%H_%M_%S'))
-    return os.path.join(output_location, path)
 
 
 class Config:
@@ -58,6 +25,9 @@ class Config:
         self.overwriteOutputFine = self.raw_config['overwriteOutputFine'] if 'overwriteOutputFine' in self.raw_config else False
         self.tasks = [TaskConfig(taskConfig, self) for taskConfig in
                       self.raw_config['tasks']] if 'tasks' in self.raw_config else None
+
+    def __getitem__(self, item):
+        return self.raw_config[item]
 
     def writeToLocation(self, location, updateOutputDir):
         to_write = self.raw_config.copy()
@@ -81,3 +51,33 @@ class Config:
             for task in self.tasks:
                 validationErrors.extend(["Task({}): {}".format(task.id, err) for err in task.validate()])
         return validationErrors
+
+
+class TaskConfig:
+    def __init__(self, taskConfig, overallConfig: Config):
+        self.id = taskConfig.get('id', None)
+        self.method = taskConfig.get('method', None)
+        self.rawTaskConfig = taskConfig
+        self.overallConfig = overallConfig
+
+    def __getitem__(self, item):
+        if item in self.rawTaskConfig:
+            return self.rawTaskConfig[item]
+        return self.overallConfig[item]
+
+    def __contains__(self, item):
+        return item in self.rawTaskConfig or item in self.overallConfig.raw_config
+
+    def validate(self):
+        validationErrors = []
+        for field in taskRequiredFields:
+            if field not in self.rawTaskConfig:
+                validationErrors.append("The '{}' attribute is required but not present.".format(field))
+        return validationErrors
+
+
+def getFullOutputDir(rawOutputDir: str):
+    path = rawOutputDir.format(date=datetime.now().strftime('%Y_%m_%d'), time=datetime.now().strftime('%H_%M_%S'))
+    return os.path.join(output_location, path)
+
+

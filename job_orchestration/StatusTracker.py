@@ -76,6 +76,8 @@ class PredRunTimes:
 
 # just basically want a singleton here - kinda jank but works for now
 predRunTimes = PredRunTimes()
+
+
 class StatusTracker:
     def __init__(self, config: Config):
         self.config = config
@@ -100,7 +102,7 @@ class StatusTracker:
             self.last_updated = self.start_time
             self.error_count = 0
 
-            testRepo = Repo(config.pathToModuleCode, search_parent_directories=True)
+            testRepo = getRepoCached(config.pathToModuleCode)
             self.currentTestSha = testRepo.head.object.hexsha
 
             self.orchestrationVersion = version('job_orchestration')
@@ -122,7 +124,7 @@ class StatusTracker:
     def finishTask(self):
         # hmm this could probably be done in a less fragile way.
         if self.status == Status.RUNNING_TASK:
-            totalTime = datetime.now()-self.last_updated
+            totalTime = datetime.now() - self.last_updated
             predRunTimes.update(self.current_task, totalTime.total_seconds())
 
         logging.info("Finishing task with id: " + self.current_task)
@@ -174,3 +176,21 @@ class StatusTracker:
             'current_job': self.current_task,
             'error_count': self.error_count
         }
+
+# todo these should be moved into separate file - also should just create a thin cache at this point
+repoCache = {}
+
+
+def getRepoCached(pathToModuleCode) -> Repo:
+    if pathToModuleCode not in repoCache:
+        repoCache[pathToModuleCode] = Repo(pathToModuleCode, search_parent_directories=True)
+    return repoCache[pathToModuleCode]
+
+
+isDirtyCache = {}
+
+
+def isRepoDirtyCached(pathToModuleCode) -> Repo:
+    if pathToModuleCode not in isDirtyCache:
+        isDirtyCache[pathToModuleCode] = getRepoCached(pathToModuleCode).is_dirty()
+    return isDirtyCache[pathToModuleCode]

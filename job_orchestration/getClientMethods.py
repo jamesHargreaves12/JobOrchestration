@@ -1,11 +1,10 @@
 import sys
 from typing import Callable
 
-# This is kinda horrible but I don't know a better way round the problem of wanting to be able to pull in functions
-# by name from another code base. At least it is isolated to this file.
-
 modulesCache = {}
 
+# This is kinda horrible but I don't know a better way round the problem of wanting to be able to pull in functions
+# by name from another code base. At least it is isolated to this file.
 
 def cached(key, resolver: Callable):
     if key in modulesCache:
@@ -21,7 +20,8 @@ def getTasks(pathToModuleCode):
         import Tasks
         sys.path.remove(pathToModuleCode)
         return Tasks
-    return cached("Tasks_"+pathToModuleCode, getTasksModule)
+
+    return cached("Tasks_" + pathToModuleCode, getTasksModule)
 
 
 def getValidators(pathToModuleCode):
@@ -30,7 +30,8 @@ def getValidators(pathToModuleCode):
         import Validators
         sys.path.remove(pathToModuleCode)
         return Validators
-    return cached("Validators_"+pathToModuleCode, getValidatorsFromModule)
+
+    return cached("Validators_" + pathToModuleCode, getValidatorsFromModule)
 
 
 def getTaskByName(pathToModuleCode, name):

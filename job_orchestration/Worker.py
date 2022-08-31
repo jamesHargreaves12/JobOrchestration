@@ -12,7 +12,15 @@ from .Loggers import setUpConsoleLogger, setUpFileLogger, removeFileLogger
 from .StatusTracker import StatusTracker, Status, predRunTimes
 from .Constants import config_ready_location, config_completed_location, config_failed_location
 from .getClientMethods import getTaskByName
+from job_orchestration.hypeparameterOptimisation import runHyperparameterOptimization, hyperparameterTrial, \
+    hyperparameterEvaluate
 from .workerRegistration import registerWorkerStarted, registerWorkerFinished
+
+specialCaseMethods = {
+    'runHyperparameterOptimization': runHyperparameterOptimization,
+    'hyperparameterTrial': hyperparameterTrial,
+    'hyperparameterEvaluate': hyperparameterEvaluate
+}
 
 
 def getNextTask(status: StatusTracker, config: Config):
@@ -61,8 +69,11 @@ def runWorker():
                     taskConfig = getNextTask(status, config)
                     status.setCurrentTask(taskConfig.id)
 
-                    logging.info("getTaskByName")
-                    task = getTaskByName(config.pathToModuleCode, taskConfig.method)
+                    logging.info("getTaskByName " + taskConfig.method)
+                    if taskConfig.method in specialCaseMethods:
+                        task = specialCaseMethods[taskConfig.method]
+                    else:
+                        task = getTaskByName(config.pathToModuleCode, taskConfig.method)
                     logging.info("Running Task")
                     taskStartTime = time()
                     task(taskConfig)
