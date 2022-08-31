@@ -61,12 +61,16 @@ def runWorker():
                     taskConfig = getNextTask(status, config)
                     status.setCurrentTask(taskConfig.id)
 
+                    logging.info("getTaskByName")
                     task = getTaskByName(config.pathToModuleCode, taskConfig.method)
+                    logging.info("Running Task")
                     taskStartTime = time()
                     task(taskConfig)
                     taskEndTime = time()
+                    logging.info("Finished Task")
 
                     status.finishTask()
+                    logging.info("status.finishTask complete")
                 except Exception as e:
                     succeeded = False
                     logging.exception(e)

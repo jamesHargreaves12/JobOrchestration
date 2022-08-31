@@ -1,3 +1,4 @@
+import math
 import os
 from collections import defaultdict
 from time import sleep
@@ -22,6 +23,8 @@ def progressReport(workerCount: int):
             timeRemaining = 0
             for t in remaining:
                 m, s = predRunTimes[t.id]
+                if m is math.nan and s is math.nan:
+                    m,s = 0,0 # not great but I don't think there is a whole lot better that can be done for the case where we have no data
                 timeRemaining += m*60+s
                 cumulativeTimeRemaining += m * 60 + s
         except:
@@ -36,7 +39,6 @@ def progressReport(workerCount: int):
 
 
 def continualProgressReport():
-    workerCountPrev = 1
     workerCount = 1
     while True:
         workerCountPrev = workerCount
@@ -49,4 +51,5 @@ def continualProgressReport():
 
 
 if __name__ == "__main__":
-    progressReport()
+    workerCount = getRunningWorkersCount()
+    progressReport(workerCount)
