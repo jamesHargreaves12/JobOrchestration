@@ -4,6 +4,7 @@ import uuid
 from random import choice
 from shutil import copyfile
 from time import time
+from typing import Dict, NoReturn, Callable
 
 import fasteners as fasteners
 
@@ -16,7 +17,7 @@ from job_orchestration.hypeparameterOptimisation import runHyperparameterOptimiz
     hyperparameterEvaluate
 from .workerRegistration import registerWorkerStarted, registerWorkerFinished
 
-specialCaseMethods = {
+specialCaseMethods: Dict[str, Callable[[dict],NoReturn]] = {
     'runHyperparameterOptimization': runHyperparameterOptimization,
     'hyperparameterTrial': hyperparameterTrial,
     'hyperparameterEvaluate': hyperparameterEvaluate
@@ -76,7 +77,7 @@ def runWorker():
                         task = getTaskByName(config.pathToModuleCode, taskConfig.method)
                     logging.info("Running Task")
                     taskStartTime = time()
-                    task(taskConfig)
+                    task({**config.raw_config, **taskConfig.rawTaskConfig})
                     taskEndTime = time()
                     logging.info("Finished Task")
 

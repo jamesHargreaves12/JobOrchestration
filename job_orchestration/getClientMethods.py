@@ -1,7 +1,8 @@
 import sys
-from typing import Callable
+from typing import Callable, NoReturn
 
 modulesCache = {}
+
 
 # This is kinda horrible but I don't know a better way round the problem of wanting to be able to pull in functions
 # by name from another code base. At least it is isolated to this file.
@@ -24,7 +25,7 @@ def getTasks(pathToModuleCode):
     return cached("Tasks_" + pathToModuleCode, getTasksModule)
 
 
-def getValidators(pathToModuleCode):
+def getValidators(pathToModuleCode) -> Callable[[dict], list]:
     def getValidatorsFromModule():
         sys.path.append(pathToModuleCode)
         import Validators
@@ -34,7 +35,7 @@ def getValidators(pathToModuleCode):
     return cached("Validators_" + pathToModuleCode, getValidatorsFromModule)
 
 
-def getTaskByName(pathToModuleCode, name):
+def getTaskByName(pathToModuleCode, name) -> Callable[[dict], NoReturn]:
     Tasks = getTasks(pathToModuleCode)
     return getattr(Tasks, name)
 

@@ -1,10 +1,8 @@
 import logging
 from time import sleep
 
-from job_orchestration.Config import TaskConfig
 
-
-def test(config: TaskConfig):
+def test(config: dict):
     for i in range(3):
         sleep(1)
         logging.info("Hello World!")

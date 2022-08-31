@@ -1,8 +1,5 @@
-from job_orchestration.Config import TaskConfig
-
-
-def test(taskConfig:TaskConfig):
-    requiredFields = ['x','y']
+def test(taskConfig: dict):
+    requiredFields = ['x', 'y']
     errors = []
     for field in requiredFields:
         if field not in taskConfig:
