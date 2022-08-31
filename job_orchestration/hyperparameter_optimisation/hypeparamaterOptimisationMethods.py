@@ -2,6 +2,7 @@
 import logging
 import os
 import time
+from abc import ABC
 
 import yaml
 
@@ -12,6 +13,7 @@ from job_orchestration.configBase import Dict2Class
 from job_orchestration.getClientMethods import getTaskByName
 from job_orchestration.Config import Config
 from job_orchestration.setupOutput import setupOutput
+from job_orchestration.TaskBase import TaskBase
 
 
 def hyperParameterOptimisationFactory(optimisationMethod: str) -> (HyperParameterOptimisationBase, Dict2Class):
@@ -20,18 +22,18 @@ def hyperParameterOptimisationFactory(optimisationMethod: str) -> (HyperParamete
     raise Exception("Unknown optimisationMethod")
 
 
-def __setupNextConfig(currentConfig: dict, baseOutputDir, candidate):
+def setupNextConfig(currentConfig: dict, baseOutputDir, candidate):
     uid = str(int(time.time()))
     nextConfig = currentConfig
     nextConfig["tasks"] = [
         {
-            'id': 'hyperparameterTrial',
-            'method': 'hyperparameterTrial',
+            'id': 'HyperparameterTrial',
+            'method': 'HyperparameterTrial',
             'paramVals': candidate
         },
         {
-            'id': 'hyperparameterEvaluate',
-            'method': 'hyperparameterEvaluate'
+            'id': 'HyperparameterEvaluate',
+            'method': 'HyperparameterEvaluate'
         }
     ]
     nextConfig["outputDir"] = os.path.join(baseOutputDir, uid)
@@ -41,74 +43,75 @@ def __setupNextConfig(currentConfig: dict, baseOutputDir, candidate):
     setupOutput(Config(configFilePath), configFilename)  # possibly wasteful but works for now
 
 
-class StartHyperparameterOptimizationConfig(Dict2Class):
+class TaskWithInitAndValidate(TaskBase, Dict2Class, ABC):
+    def __init__(self, config: dict):
+        Dict2Class.__init__(self, config)
+
+
+class StartHyperparameterOptimization(TaskWithInitAndValidate):
     optimisationMethod: str
     baseOutputDir: str
 
+    def run(self):
+        hyperParameterOptimizer, configClass = hyperParameterOptimisationFactory(self.optimisationMethod)
+        initialCandidate = hyperParameterOptimizer.getNextTrial(configClass(self.raw_dict), [])
 
-def __runHyperparameterOptimization(config: StartHyperparameterOptimizationConfig):
-    hyperParameterOptimizer, configClass = hyperParameterOptimisationFactory(config.optimisationMethod)
-    initialCandidate = hyperParameterOptimizer.getNextTrial(configClass(config.raw_dict), [])
-
-    __setupNextConfig(config.raw_dict, config.baseOutputDir, initialCandidate)
+        setupNextConfig(self.raw_dict, self.baseOutputDir, initialCandidate)
 
 
-# This has all become kinda awkward due to the need to pull some variables from task level config aswell as top level.
-# I should revisit this.
-class HyperParameterTrialConfig(Dict2Class):
+class HyperparameterTrial(TaskWithInitAndValidate):
     pathToModuleCode: str
     testMethod: str
     paramVals: dict
     resultsFilepath: str
 
+    def run(self):
+        logging.info("getTaskByName")
+        task = getTaskByName(self.pathToModuleCode, self.testMethod)
+        logging.info("Running Task")
 
-def __hyperparameterTrial(config: HyperParameterTrialConfig):
-    logging.info("getTaskByName")
-    task = getTaskByName(config.pathToModuleCode, config.testMethod)
-    logging.info("Running Task")
+        fakeTaskConfig = {
+            'id': 'hyperparameterOptimisation_{}'.format(task.__name__),
+            'method': task.__name__
+        }
+        for param, val in self.paramVals.items():
+            fakeTaskConfig[param] = val
+        taskConfig = {**self.raw_dict, **fakeTaskConfig}
+        result = task(taskConfig).run()
 
-    fakeTaskConfig = {
-        'id': 'hyperparameterOptimisation_{}'.format(task.__name__),
-        'method': task.__name__
-    }
-    for param, val in config.paramVals.items():
-        fakeTaskConfig[param] = val
-    result = task({**config.raw_dict, **fakeTaskConfig})
-
-    logging.info("Finished Task")
-    resultsPath = config.resultsFilepath
-    curResults: list = yaml.safe_load(open(resultsPath)) if os.path.exists(resultsPath) else []
-    trialResult = config.paramVals.copy()
-    trialResult["result"] = result
-    curResults.append(trialResult)
-    with open(config.resultsFilepath, "w+") as fp:
-        yaml.dump(curResults, fp)
-    logging.info("finished hyperparameterTrial")
+        logging.info("Finished Task")
+        resultsPath = self.resultsFilepath
+        curResults: list = yaml.safe_load(open(resultsPath)) if os.path.exists(resultsPath) else []
+        trialResult = self.paramVals.copy()
+        trialResult["result"] = result
+        curResults.append(trialResult)
+        with open(self.resultsFilepath, "w+") as fp:
+            yaml.dump(curResults, fp)
+        logging.info("finished hyperparameterTrial")
 
 
-class HyperparameterEvaluateConfig(Dict2Class):
+class HyperparameterEvaluate(TaskWithInitAndValidate):
     resultsFilepath: str
     numberTrials: int  # should be optional?
     optimisationMethod: str
     baseOutputDir: str
 
+    def run(self):
+        def logMax(results):
+            logging.info(
+                "The maximum setting of params found is: {}".format(max(results, key=lambda x: x["result"]))
+            )
 
-def __hyperparameterEvaluate(config: HyperparameterEvaluateConfig):
-    def logMax(results):
-        logging.info(
-            "The maximum setting of params found is: {}".format(max(results, key=lambda x: x["result"]))
-        )
+        resultsPath = self.resultsFilepath
+        curResults: list = yaml.safe_load(open(resultsPath)) if os.path.exists(resultsPath) else []
 
-    resultsPath = config.resultsFilepath
-    curResults: list = yaml.safe_load(open(resultsPath)) if os.path.exists(resultsPath) else []
+        if self.numberTrials is not None and self.numberTrials == len(curResults):
+            logMax(curResults)
+            return
 
-    if config.numberTrials is not None and config.numberTrials == len(curResults):
-        logMax(curResults)
-        return
-
-    hyperParameterOptimizer, configClass = hyperParameterOptimisationFactory(config.optimisationMethod)
-    candidate = hyperParameterOptimizer.getNextTrial(configClass(config.raw_dict), curResults)
-    if candidate is None:
-        logMax(curResults)
-        return
-    __setupNextConfig(config.raw_dict, config.baseOutputDir, candidate)
+        hyperParameterOptimizer, configClass = hyperParameterOptimisationFactory(self.optimisationMethod)
+        candidate = hyperParameterOptimizer.getNextTrial(configClass(self.raw_dict), curResults)
+        if candidate is None:
+            logMax(curResults)
+            return
+        setupNextConfig(self.raw_dict, self.baseOutputDir, candidate)

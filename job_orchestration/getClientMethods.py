@@ -1,5 +1,7 @@
 import sys
-from typing import Callable, NoReturn
+from typing import Callable
+
+from job_orchestration.TaskBase import TaskBase
 
 modulesCache = {}
 
@@ -25,23 +27,6 @@ def getTasks(pathToModuleCode):
     return cached("Tasks_" + pathToModuleCode, getTasksModule)
 
 
-def getValidators(pathToModuleCode) -> Callable[[dict], list]:
-    def getValidatorsFromModule():
-        sys.path.append(pathToModuleCode)
-        import Validators
-        sys.path.remove(pathToModuleCode)
-        return Validators
-
-    return cached("Validators_" + pathToModuleCode, getValidatorsFromModule)
-
-
-def getTaskByName(pathToModuleCode, name) -> Callable[[dict], NoReturn]:
+def getTaskByName(pathToModuleCode, name) -> Callable[[dict],TaskBase]:
     Tasks = getTasks(pathToModuleCode)
     return getattr(Tasks, name)
-
-
-def getValidatorByName(pathToModuleCode, name):
-    Validators = getValidators(pathToModuleCode)
-    if not hasattr(Validators, name):
-        return None
-    return getattr(Validators, name)

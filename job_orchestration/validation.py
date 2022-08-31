@@ -3,8 +3,8 @@ import sys
 
 from .Config import Config
 from .StatusTracker import isRepoDirtyCached
-from .getClientMethods import getValidatorByName
-from .hypeparameterOptimisation import specialCaseValidators
+from .getClientMethods import getTaskByName
+from .specialTasks import specialTasks
 
 
 def checkGitRepo(config: Config):
@@ -21,12 +21,15 @@ def validateConfig(config: Config):
     for taskConfig in config.tasks:
         validationErrors = []
         if taskConfig.method is not None:
-            if taskConfig.method in specialCaseValidators:
-                validator = specialCaseValidators[taskConfig.method]
+            taskConfigDict = {**config.raw_config, **taskConfig.rawTaskConfig}
+            if taskConfig.method in specialTasks:
+                taskClass = specialTasks[taskConfig.method]
             else:
-                validator = getValidatorByName(taskConfig.overallConfig.pathToModuleCode, taskConfig.method)
-            if validator is not None:
-                validationErrors.extend(validator({**config.raw_config, **taskConfig.rawTaskConfig}))
+                taskClass = getTaskByName(taskConfig.overallConfig.pathToModuleCode, taskConfig.method)
+
+            if taskClass is not None:
+                task = taskClass(taskConfigDict)
+                validationErrors.extend(task.validate())
 
     if validationErrors:
         logging.error("The config file failed validation.")

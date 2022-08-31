@@ -56,7 +56,7 @@ class Config:
 class TaskConfig:
     def __init__(self, taskConfig, overallConfig: Config):
         self.id = taskConfig.get('id', None)
-        self.method = taskConfig.get('method', None)
+        self.method = taskConfig.get('method', None) # todo rename to name
         self.rawTaskConfig = taskConfig
         self.overallConfig = overallConfig
 

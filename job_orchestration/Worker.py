@@ -13,15 +13,8 @@ from .Loggers import setUpConsoleLogger, setUpFileLogger, removeFileLogger
 from .StatusTracker import StatusTracker, Status, predRunTimes
 from .Constants import config_ready_location, config_completed_location, config_failed_location
 from .getClientMethods import getTaskByName
-from job_orchestration.hypeparameterOptimisation import runHyperparameterOptimization, hyperparameterTrial, \
-    hyperparameterEvaluate
+from job_orchestration.specialTasks import specialTasks
 from .workerRegistration import registerWorkerStarted, registerWorkerFinished
-
-specialCaseMethods: Dict[str, Callable[[dict],NoReturn]] = {
-    'runHyperparameterOptimization': runHyperparameterOptimization,
-    'hyperparameterTrial': hyperparameterTrial,
-    'hyperparameterEvaluate': hyperparameterEvaluate
-}
 
 
 def getNextTask(status: StatusTracker, config: Config):
@@ -65,19 +58,22 @@ def runWorker():
                 status = StatusTracker(config)
                 try:
                     # Note that there is a possibility that the config was a candidate but is no longer. However,
-                    # the only case that can cause this is if the job has failed / completed in which case it will fail on
-                    # next line.
+                    # the only case that can cause this is if the job has failed / completed in which case it will
+                    # fail on next line.
                     taskConfig = getNextTask(status, config)
                     status.setCurrentTask(taskConfig.id)
 
                     logging.info("getTaskByName " + taskConfig.method)
-                    if taskConfig.method in specialCaseMethods:
-                        task = specialCaseMethods[taskConfig.method]
+                    taskConfigDict = {**config.raw_config, **taskConfig.rawTaskConfig}
+                    if taskConfig.method in specialTasks:
+                        taskClass = specialTasks[taskConfig.method]
                     else:
-                        task = getTaskByName(config.pathToModuleCode, taskConfig.method)
+                        taskClass = getTaskByName(taskConfig.overallConfig.pathToModuleCode, taskConfig.method)
+
+                    task = taskClass(taskConfigDict)
                     logging.info("Running Task")
                     taskStartTime = time()
-                    task({**config.raw_config, **taskConfig.rawTaskConfig})
+                    task.run()
                     taskEndTime = time()
                     logging.info("Finished Task")
 
