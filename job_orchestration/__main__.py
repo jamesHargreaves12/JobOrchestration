@@ -1,12 +1,14 @@
 import argparse
 import os
+import sys
+
 from .Constants import config_source_location, config_ready_location, config_completed_location, config_failed_location, \
-    misc_location
+    misc_location, output_location
 
 
 def __setupDirectoryStructure():
     requiredLocations = [config_source_location, config_ready_location, config_completed_location,
-                         config_failed_location, misc_location]
+                         config_failed_location, misc_location, output_location]
     for loc in requiredLocations:
         if not os.path.exists(loc):
             os.makedirs(loc)
@@ -32,7 +34,7 @@ def rereadyFailed():
     reReadyFailedConfigs()
 
 
-actions = [newWorker, readyConfigs, progressReport,rereadyFailed]
+actions = [newWorker, readyConfigs, progressReport, rereadyFailed]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-action", type=str)
@@ -41,14 +43,17 @@ if "action" in args and args.action is not None:
     actionId = args.action.lower()
 else:
     print("Which action would you like to perform?")
-    for i,act in enumerate(actions):
-        print("    {}: {}".format(i,act.__name__))
+    for i, act in enumerate(actions):
+        print("    {}: {}".format(i, act.__name__))
     userInput = input()
     if str.isdigit(userInput):
         actionId = actions[int(userInput)].__name__.lower()
     else:
         actionId = userInput.lower()
 
+if actionId in ["", "na"]:
+    __setupDirectoryStructure()
+    sys.exit(0)
 
 for action in actions:
     if action.__name__.lower() == actionId:

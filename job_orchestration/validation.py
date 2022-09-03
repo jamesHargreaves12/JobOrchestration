@@ -2,16 +2,16 @@ import logging
 import sys
 
 from .Config import Config
-from .StatusTracker import isRepoDirtyCached
 from .getClientMethods import getTaskByName
 from .specialTasks import specialTasks
+from .utils import isRepoDirtyCached
 
 
 def checkGitRepo(config: Config):
     if "UNSAFE_ignoreDirtyCheck" in config.raw_config and config.raw_config["UNSAFE_ignoreDirtyCheck"]:
         logging.warning("Skiping dirty check - these results might not be repeatable")
     else:
-        assert not isRepoDirtyCached(config.pathToModuleCode), \
+        assert not isRepoDirtyCached(config.pathToTasks), \
             "You have uncommitted changes this means that your results will not be easily repeatable."
 
 
@@ -21,14 +21,13 @@ def validateConfig(config: Config):
     for taskConfig in config.tasks:
         validationErrors = []
         if taskConfig.method is not None:
-            taskConfigDict = {**config.raw_config, **taskConfig.rawTaskConfig}
             if taskConfig.method in specialTasks:
                 taskClass = specialTasks[taskConfig.method]
             else:
-                taskClass = getTaskByName(taskConfig.overallConfig.pathToModuleCode, taskConfig.method)
+                taskClass = getTaskByName(config.pathToTasks, taskConfig.method)
 
             if taskClass is not None:
-                task = taskClass(taskConfigDict)
+                task = taskClass(taskConfig.raw_dict)
                 validationErrors.extend(task.validate())
 
     if validationErrors:

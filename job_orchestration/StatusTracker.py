@@ -9,11 +9,11 @@ import math
 
 import fasteners
 import yaml
-from git import Repo
 from importlib_metadata import version
 
 from .Config import Config
-from .Constants import max_error_count, misc_location
+from .Constants import max_error_count, misc_location, output_location
+from .utils import getRepoCached
 
 
 class Status(Enum):
@@ -81,7 +81,7 @@ predRunTimes = PredRunTimes()
 class StatusTracker:
     def __init__(self, config: Config):
         self.config = config
-        self.outFilePath = os.path.join(config.outputDir, 'status.yaml')
+        self.outFilePath = os.path.join(output_location, config.outputDir, 'status.yaml')
         if os.path.exists(self.outFilePath):
             with open(self.outFilePath) as fp:
                 vals = yaml.load(fp, yaml.CLoader)
@@ -102,7 +102,7 @@ class StatusTracker:
             self.last_updated = self.start_time
             self.error_count = 0
 
-            testRepo = getRepoCached(config.pathToModuleCode)
+            testRepo = getRepoCached(config.pathToTasks)
             self.currentTestSha = testRepo.head.object.hexsha
 
             self.orchestrationVersion = version('job_orchestration')
@@ -176,21 +176,3 @@ class StatusTracker:
             'current_job': self.current_task,
             'error_count': self.error_count
         }
-
-# todo these should be moved into separate file - also should just create a thin cache at this point
-repoCache = {}
-
-
-def getRepoCached(pathToModuleCode) -> Repo:
-    if pathToModuleCode not in repoCache:
-        repoCache[pathToModuleCode] = Repo(pathToModuleCode, search_parent_directories=True)
-    return repoCache[pathToModuleCode]
-
-
-isDirtyCache = {}
-
-
-def isRepoDirtyCached(pathToModuleCode) -> Repo:
-    if pathToModuleCode not in isDirtyCache:
-        isDirtyCache[pathToModuleCode] = getRepoCached(pathToModuleCode).is_dirty()
-    return isDirtyCache[pathToModuleCode]

@@ -1,0 +1,9 @@
+UNSAFE_ignoreDirtyCheck: true
+githubRepository: https://github.com/jamesHargreaves12/JobOrchestrationWorkspace.git
+outputDir: test
+pathToTasks: <locationOfTaskFile>
+tasks:
+- id: Test
+  method: Test
+x: 10
+y: 50

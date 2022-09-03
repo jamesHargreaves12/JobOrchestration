@@ -4,14 +4,13 @@ import uuid
 from random import choice
 from shutil import copyfile
 from time import time
-from typing import Dict, NoReturn, Callable
 
 import fasteners as fasteners
 
 from .Config import Config
 from .Loggers import setUpConsoleLogger, setUpFileLogger, removeFileLogger
 from .StatusTracker import StatusTracker, Status, predRunTimes
-from .Constants import config_ready_location, config_completed_location, config_failed_location
+from .Constants import config_ready_location, config_completed_location, config_failed_location, output_location
 from .getClientMethods import getTaskByName
 from job_orchestration.specialTasks import specialTasks
 from .workerRegistration import registerWorkerStarted, registerWorkerFinished
@@ -49,7 +48,7 @@ def runWorker():
 
             config = Config(filepath)
 
-            lock = fasteners.InterProcessLock(os.path.join(config.outputDir, 'lock.file'))
+            lock = fasteners.InterProcessLock(os.path.join(output_location, config.outputDir, 'lock.file'))
             lock.acquire(blocking=False)
             succeeded = True
 
@@ -64,13 +63,12 @@ def runWorker():
                     status.setCurrentTask(taskConfig.id)
 
                     logging.info("getTaskByName " + taskConfig.method)
-                    taskConfigDict = {**config.raw_config, **taskConfig.rawTaskConfig}
                     if taskConfig.method in specialTasks:
                         taskClass = specialTasks[taskConfig.method]
                     else:
-                        taskClass = getTaskByName(taskConfig.overallConfig.pathToModuleCode, taskConfig.method)
+                        taskClass = getTaskByName(config.pathToTasks, taskConfig.method)
 
-                    task = taskClass(taskConfigDict)
+                    task = taskClass(taskConfig.raw_dict)
                     logging.info("Running Task")
                     taskStartTime = time()
                     task.run()
