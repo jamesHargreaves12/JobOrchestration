@@ -45,7 +45,7 @@ class Config:
 
     def validate(self):
         validationErrors = []
-        for field in ['outputDir', 'tasks', 'githubRepository', 'pathToModuleCode']:
+        for field in ['outputDir', 'tasks', 'githubRepository', 'pathToTasks']:
             if field not in self.raw_config:
                 validationErrors.append("The '{}' attribute is required but not present.".format(field))
 

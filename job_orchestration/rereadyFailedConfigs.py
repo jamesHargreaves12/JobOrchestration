@@ -10,4 +10,7 @@ def reReadyFailedConfigs():
         configFilepath = os.path.join(config_failed_location, configFilename)
         config = Config(configFilepath)
         shutil.rmtree(os.path.join(output_location, config.outputDir))
-        shutil.move(configFilepath, os.path.join(config_ready_location, configFilename))
+        config_ready_path = os.path.join(config_ready_location, configFilename)
+        shutil.move(configFilepath, config_ready_path)
+        os.makedirs(os.path.join(output_location, config.outputDir))
+        shutil.copyfile(config_ready_path, os.path.join(output_location, config.outputDir, configFilename))

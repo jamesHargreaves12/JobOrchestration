@@ -5,10 +5,17 @@ from job_orchestration.hyperparameter_optimisation.base import HyperParameterOpt
 
 
 class Param(Dict2Class):
-    min: int
-    max: int
     name: int
     type: str  # can be stricter.
+
+
+class FloatParam(Param):
+    min: int
+    max: int
+
+
+class ListParam(Param):
+    vals: list
 
 
 class GridOptimizationConfig(Dict2Class):
@@ -17,7 +24,7 @@ class GridOptimizationConfig(Dict2Class):
 
     def __init__(self, input_dict: dict):
         super().__init__(input_dict)
-        self.params = [Param(p) for p in input_dict['params']]
+        self.params = [FloatParam(p) if p['type'] == 'float' else ListParam(p) for p in input_dict['params']]
 
 
 class GridSearch(HyperParameterOptimisationBase):
@@ -26,11 +33,14 @@ class GridSearch(HyperParameterOptimisationBase):
         gridLineCount = config.gridLineCount  # per config?
         for param in config.params:
             if param.type == "float":
+                param: FloatParam
                 start = param.min
                 end = param.max
                 step = (end - start) / (gridLineCount - 1)
                 toTry[param.name] = [start + i * step for i in range(gridLineCount)]
-
+            elif param.type == "list":
+                param: ListParam
+                toTry[param.name] = param.vals
         paramIndex = 0
         choices = {}
         while paramIndex < len(config.params):
@@ -67,15 +77,15 @@ class GridSearch(HyperParameterOptimisationBase):
 
 if __name__ == "__main__":
     results1 = [
-        {'x': 1, 'y': 4},
-        {'x': 1, 'y': 5},
-        {'x': 1, 'y': 6},
+        {'x': 1, 'y': 'a'},
+        {'x': 1, 'y': 'b'},
+        {'x': 1, 'y': 'c'},
     ]
     config1 = {
         'gridLineCount': 3,
         'params': [
-            {'name': 'x', 'type': 'float', 'min': 1, 'max': 1},
-            {'name': 'y', 'type': 'float', 'min': 4, 'max': 6}
+            {'name': 'x', 'type': 'float', 'min': 1, 'max': 3},
+            {'name': 'y', 'type': 'list', 'vals': ['a', 'b', 'c']}
         ]
     }
 

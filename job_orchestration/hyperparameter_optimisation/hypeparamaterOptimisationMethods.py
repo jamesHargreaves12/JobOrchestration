@@ -60,14 +60,14 @@ class StartHyperparameterOptimization(TaskWithInitAndValidate):
 
 
 class HyperparameterTrial(TaskWithInitAndValidate):
-    pathToModuleCode: str
+    pathToTasks: str
     testMethod: str
     paramVals: dict
     resultsFilepath: str
 
     def run(self):
         logging.info("getTaskByName")
-        task = getTaskByName(self.pathToModuleCode, self.testMethod)
+        task = getTaskByName(self.pathToTasks, self.testMethod)
         logging.info("Running Task")
 
         fakeTaskConfig = {
