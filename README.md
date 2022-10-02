@@ -25,12 +25,13 @@ to find that the result didn't save due to a missing path.
 This package is an attempt to provide a basic framework to start to address these pain points. It was also important that
 the package was Lightweight and didn't increase the run time significantly. Also while it was accepted that this package 
 would require some level opinionation to achieve these goals there was an aim to under index on this for the main feature 
-of the package where possible. Finally, we only considered experiments that could be run on a single machine.
+of the package where possible. Finally, we only considered experiments that could be run on a single machine scaling out 
+to multiple machines can be achieved by just partitioning the config files.
 
 
 ## Get Started: 
 Download the package by running the following commands.
-TODO
+`pip install job-orchestration`
 
 The first thing that you will need to do is set the `JOB_ORCHESTRATION_WORKSPACE` environment variable to tell the
 module where you will write logs / output / etc too.

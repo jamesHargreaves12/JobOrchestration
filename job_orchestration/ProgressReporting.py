@@ -24,8 +24,8 @@ def progressReport(workerCount: int):
             for t in remaining:
                 m, s = predRunTimes[t.id]
                 if m is math.nan and s is math.nan:
-                    m,s = 0,0 # not great but I don't think there is a whole lot better that can be done for the case where we have no data
-                timeRemaining += m*60+s
+                    m, s = 0, 0  # not great but I don't think there is a whole lot better that can be done for the case where we have no data
+                timeRemaining += m * 60 + s
                 cumulativeTimeRemaining += m * 60 + s
         except:
             pass  # Can fail if status of file changes while running.
@@ -35,7 +35,11 @@ def progressReport(workerCount: int):
 
     print("Number of running workers:", workerCount)
     remainingTime = cumulativeTimeRemaining / max(workerCount, 1)
-    print("Expected time remaining: {}m{}".format(int(remainingTime // 60), int(remainingTime % 60)))
+    print("Expected time remaining: {}h{}m{}".format(
+        int(remainingTime // 3600),  # h
+        int((remainingTime % 3600) // 60),  # m
+        int(remainingTime % 60))  # s
+    )
 
 
 def continualProgressReport():
@@ -44,7 +48,7 @@ def continualProgressReport():
         workerCountPrev = workerCount
         workerCount = getRunningWorkersCount()
         if workerCount == 0 and workerCountPrev == 0:
-            break # if we have two 0s 60s appart then we will stop
+            break  # if we have two 0s 60s appart then we will stop
         progressReport(workerCount)
         print()
         sleep(60)
