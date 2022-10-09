@@ -1,5 +1,8 @@
 import logging
 import os
+import gc
+import random
+import sys
 import uuid
 from random import choice
 from shutil import copyfile
@@ -95,6 +98,11 @@ def runWorker():
                     os.remove(filepath)
 
                 removeFileLogger()
+                # 5% of the time lets chuck in a bunch of perf stats for debugging perf stats
+                if random.random() < 0.05:
+                    logging.info(f"GC counts= {gc.get_count()}")
+                    logging.info(sys._debugmallocstats())
+
                 lock.release()
                 endLoopTime = time()
                 if succeeded:
