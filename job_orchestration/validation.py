@@ -19,7 +19,6 @@ def validateConfig(config: Config):
     logging.info("Starting Validation")
     validationErrors = config.validate()
     for taskConfig in config.tasks:
-        validationErrors = []
         if taskConfig.method is not None:
             if taskConfig.method in specialTasks:
                 taskClass = specialTasks[taskConfig.method]
@@ -28,7 +27,9 @@ def validateConfig(config: Config):
 
             if taskClass is not None:
                 task = taskClass(taskConfig.raw_dict)
-                validationErrors.extend(task.validate())
+                logging.info(f"Validating {taskConfig.method}")
+                validationResult = task.validate()
+                validationErrors.extend(validationResult)
 
     if validationErrors:
         logging.error("The config file failed validation.")

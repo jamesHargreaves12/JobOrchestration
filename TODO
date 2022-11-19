@@ -1,0 +1,20 @@
+
+hyperParams
+ - need to add a train as well as a test?
+ - need to add the smarter searches like I did at uni
+
+when hit unrepeatable change warning add ignore
+
+automatic worker balancing (how many workers etc.)
+
+improve validation
+
+other smaller tasks:
+- clear space on hard drive / make save less so don't hit hard drive space issues
+- indexing of results to make things faster?
+- make progress updating faster - caching changes
+
+I think the key thing is to reduce the friction of 
+a) Starting an experiment
+b) Knowing when an experiment is finished
+c) getting the key results from an expeirment. 

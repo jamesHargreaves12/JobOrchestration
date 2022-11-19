@@ -17,6 +17,7 @@ class Dict2Class(object):
         return errs
 
 
-class TaskWithInitAndValidate(TaskBase, Dict2Class, ABC):
+# Important that DictToClass is first as we want this to be the validation implementation used.
+class TaskWithInitAndValidate(Dict2Class, TaskBase, ABC):
     def __init__(self, config: dict):
         Dict2Class.__init__(self, config)
